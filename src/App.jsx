@@ -41,7 +41,7 @@ const RI_STAGES = [
 const QUALIFICATIONS = [
   "Vendedor(a)","Comprador(a)","Doador(a)","Donatário(a)",
   "Cedente","Cessionário(a)","Representante","Procurador(a)",
-  "Anuente","Interveniente",
+  "Anuente","Interveniente","Herdeiro(a)","Advogado(a)","Viúvo(a)",
 ];
 
 const ESCRITURA_TIPOS = [
@@ -53,7 +53,9 @@ const ESCRITURA_TIPOS = [
 
 const initialCase = () => ({
   id:null, protocolo:"", senha:"", tipo:"", teor:"",
-  dataSolicitacao:"", dataDocumentacao:"", estagio:1, pendencia:"",
+  dataSolicitacao:"", dataDocumentacao:"", estagio:1, pendencia:"", conferenciaInterna:false,
+  minutaBase64:"", minutaFileName:"", observacoesCliente:"",
+  documentoFinalBase64:"", documentoFinalFileName:"",
   solicitante:{nome:"",cpf:"",email:"",telefone:""},
   canal:"WhatsApp", minutaResponsavel:"Heitor", minutaResponsavelCustom:"", partes:[],
   documentosNecessarios:"", documentosPendentes:"",
@@ -119,6 +121,38 @@ export default function App(){
   const PASS = "heitor2724";
 
   const showToast=(msg,type="ok")=>{setToast({msg,type});setTimeout(()=>setToast(null),3200);};
+
+  const gerarMensagem=(c)=>{
+    const stg=STAGES.find(s=>s.id===c.estagio);
+    const nome=c.solicitante?.nome?.split(" ")[0]||"cliente";
+    return [
+      `Olá, ${nome}!`,``,
+      `Aqui é o Escrevente Heitor Lima — 27º Tabelião de Notas da Capital.`,``,
+      `Seu processo foi atualizado:`,
+      `📋 Protocolo: ${c.protocolo||c.id}`,
+      c.tipo?`📌 Tipo: ${c.tipo}`:null,
+      `🔄 Estágio atual: ${stg?.label||"—"}`,
+      c.pendencia?`⚠️ Pendência: ${c.pendencia}`:null,``,
+      `Acesse nosso sistema com seu protocolo e senha para acompanhar em detalhes.`,``,
+      `Qualquer dúvida, estamos à disposição!`,
+    ].filter(l=>l!==null).join("\n");
+  };
+
+  const notificarCliente=(c)=>{
+    const msg=gerarMensagem(c);
+    if(c.canal==="WhatsApp"){
+      const phone=(c.solicitante?.telefone||"").replace(/\D/g,"");
+      if(!phone){showToast("Telefone não cadastrado.","danger");return;}
+      window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`,"_blank");
+    }else if(c.canal==="E-mail"){
+      const email=c.solicitante?.email;
+      if(!email){showToast("E-mail não cadastrado.","danger");return;}
+      const sub=`Atualização do seu processo — Protocolo ${c.protocolo||c.id}`;
+      window.open(`mailto:${email}?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(msg)}`,"_blank");
+    }else{
+      showToast(`Canal "${c.canal}" não suporta notificação automática.`,"danger");
+    }
+  };
 
   const handleLogin=()=>{
     if(adminPwd===PASS){setAdminAuth(true);setView("admin");setAdminErr("");}
@@ -342,7 +376,8 @@ export default function App(){
             {consultErr&&<div style={{color:C.danger,fontSize:12,marginBottom:12,padding:"10px 14px",background:C.danger+"18",borderRadius:6,border:`1px solid ${C.danger}33`}}>{consultErr}</div>}
             <button className="btn btn-gold" style={{width:"100%",justifyContent:"center"}} onClick={handleConsult}>Consultar</button>
           </div>
-          {consultResult&&<CaseView c={consultResult} stageColor={stageColor}/>}
+          {consultResult&&<CaseView c={consultResult} stageColor={stageColor}
+            onSaveObs={(obs)=>{const u={...consultResult,observacoesCliente:obs};setConsultResult(u);setCases(cases.map(c=>c.id===u.id?u:c));}}/>}
         </div>
       )}
 
@@ -408,6 +443,11 @@ export default function App(){
                 <div style={{display:"flex",gap:8,flexShrink:0}}>
                   <button className="btn" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>{setDetailCase(c);setView("detail");}}>Ver</button>
                   <button className="btn" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>openEdit(c)}>Editar</button>
+                  {(c.canal==="WhatsApp"||c.canal==="E-mail")&&(
+                    <button className="btn" style={{fontSize:10,padding:"7px 14px",borderColor:C.gold+"88",color:C.gold}} onClick={()=>notificarCliente(c)}>
+                      {c.canal==="WhatsApp"?"📱 Notificar":"✉️ Notificar"}
+                    </button>
+                  )}
                   <button className="btn btn-danger" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>delCase(c.id)}>Excluir</button>
                 </div>
               </div>
@@ -436,6 +476,12 @@ export default function App(){
               <Field label="Status RI" val={detailCase.registroImovel?.estagio||"—"}/>
             </div>
             {detailCase.observacoes&&<div style={{marginTop:14}}><Field label="Observações" val={detailCase.observacoes}/></div>}
+            {detailCase.observacoesCliente&&(
+              <div style={{marginTop:14,padding:"12px 16px",background:C.info+"14",borderRadius:6,border:`1px solid ${C.info}30`}}>
+                <div style={{fontSize:9,color:C.info,fontWeight:700,letterSpacing:"0.12em",marginBottom:6}}>OBSERVAÇÕES DO CLIENTE</div>
+                <div style={{fontSize:13,color:C.text,whiteSpace:"pre-line"}}>{detailCase.observacoesCliente}</div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -449,6 +495,7 @@ export default function App(){
           addParte={addParte} remParte={remParte}
           saveCase={saveCase} editId={editId}
           onCancel={()=>{setView("admin");setEditId(null);}}
+          notificarCliente={notificarCliente}
           steps={FORM_STEPS}
           STAGES={STAGES} TIPOS={ESCRITURA_TIPOS}
           QUALS={QUALIFICATIONS} RI_STAGES={RI_STAGES} C={C}
@@ -499,7 +546,7 @@ export default function App(){
 }
 
 /* ─── CaseView ─── */
-function CaseView({c,stageColor}){
+function CaseView({c,stageColor,onSaveObs}){
   const stg=STAGES.find(s=>s.id===c.estagio);
   return(
     <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
@@ -542,7 +589,7 @@ function CaseView({c,stageColor}){
               {c.valores?.escritura&&<ValCard label="Escritura" val={`R$ ${c.valores.escritura}`}/>}
               {c.valores?.registro&&<ValCard label="Registro" val={`R$ ${c.valores.registro}`}/>}
               {c.valores?.imposto&&<ValCard label={c.valores?.tipoImposto||"Imposto"} val={`R$ ${c.valores.imposto}`}/>}
-              {c.valores?.certidoes&&<ValCard label="Certidões" val={`R$ ${c.valores.certidoes}`}/>}
+              {c.valores?.certidoes&&<ValCard label="Certidão" val={`R$ ${c.valores.certidoes}`}/>}
               {c.valores?.total&&<ValCard label="Total" val={`R$ ${c.valores.total}`} accent/>}
             </div>
           </div>
@@ -579,6 +626,15 @@ function CaseView({c,stageColor}){
           </div>
         )}
 
+        {c.estagio===4&&c.conferenciaInterna&&(
+          <div style={{gridColumn:"1/-1",padding:"12px 18px",background:C.info+"14",borderRadius:6,border:`1px solid ${C.info}30`,display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:15}}>🔍</span>
+            <div>
+              <div style={{fontSize:9,color:C.info,fontWeight:700,letterSpacing:"0.12em",marginBottom:2}}>ELABORAÇÃO DE MINUTA</div>
+              <div style={{fontSize:13,color:C.info,fontWeight:600}}>Em conferência interna</div>
+            </div>
+          </div>
+        )}
         {c.pendencia&&(
           <div style={{gridColumn:"1/-1",padding:"14px 18px",background:C.warning+"14",borderRadius:6,border:`1px solid ${C.warning}30`}}>
             <div style={{fontSize:9,color:C.warning,fontWeight:700,letterSpacing:"0.12em",marginBottom:6}}>PENDÊNCIA PARA PRÓXIMO ESTÁGIO</div>
@@ -601,6 +657,87 @@ function CaseView({c,stageColor}){
             </div>
           </div>
         )}
+
+        {c.documentoFinalBase64&&(
+          <DocumentoViewer fileName={c.documentoFinalFileName} base64={c.documentoFinalBase64}/>
+        )}
+
+        {c.minutaBase64&&(
+          <div style={{gridColumn:"1/-1",padding:"14px 18px",background:C.info+"14",borderRadius:6,border:`1px solid ${C.info}30`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:14}}>
+            <div>
+              <div style={{fontSize:9,color:C.info,fontWeight:700,letterSpacing:"0.12em",marginBottom:4}}>MINUTA DISPONÍVEL</div>
+              <div style={{fontSize:12,color:C.text}}>📄 {c.minutaFileName||"minuta"}</div>
+            </div>
+            <a href={c.minutaBase64} download={c.minutaFileName||"minuta"}
+              style={{display:"inline-flex",alignItems:"center",gap:8,padding:"9px 20px",borderRadius:5,
+                background:C.gold,border:`1px solid ${C.gold}`,color:C.bg,cursor:"pointer",
+                fontFamily:"'Montserrat',sans-serif",fontSize:12,fontWeight:600,
+                letterSpacing:"0.06em",textTransform:"uppercase",textDecoration:"none"}}>
+              Baixar
+            </a>
+          </div>
+        )}
+
+        {onSaveObs&&<ClienteObs c={c} onSaveObs={onSaveObs}/>}
+      </div>
+    </div>
+  );
+}
+
+function DocumentoViewer({fileName,base64}){
+  const [show,setShow]=useState(false);
+  return(
+    <div style={{gridColumn:"1/-1",padding:"16px 18px",background:C.success+"14",borderRadius:8,border:`1px solid ${C.success}33`}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:14,flexWrap:"wrap"}}>
+        <div>
+          <div style={{fontSize:9,color:C.success,fontWeight:700,letterSpacing:"0.12em",marginBottom:4}}>DOCUMENTO FINAL DISPONÍVEL</div>
+          <div style={{fontSize:12,color:C.text}}>📄 {fileName||"documento.pdf"}</div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setShow(s=>!s)}
+            style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 16px",borderRadius:5,
+              background:"transparent",border:`1px solid ${C.success}`,color:C.success,cursor:"pointer",
+              fontFamily:"'Montserrat',sans-serif",fontSize:11,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase"}}>
+            {show?"Fechar":"Ver Documento"}
+          </button>
+          <a href={base64} download={fileName||"documento.pdf"}
+            style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 16px",borderRadius:5,
+              background:C.success,border:`1px solid ${C.success}`,color:"#fff",cursor:"pointer",
+              fontFamily:"'Montserrat',sans-serif",fontSize:11,fontWeight:600,
+              letterSpacing:"0.06em",textTransform:"uppercase",textDecoration:"none"}}>
+            Baixar
+          </a>
+        </div>
+      </div>
+      {show&&(
+        <iframe src={base64} title="Documento Final"
+          style={{width:"100%",height:540,marginTop:16,borderRadius:6,border:`1px solid ${C.border}`}}/>
+      )}
+    </div>
+  );
+}
+
+function ClienteObs({c,onSaveObs}){
+  const [obs,setObs]=useState(c.observacoesCliente||"");
+  const [saved,setSaved]=useState(false);
+  const save=()=>{onSaveObs(obs);setSaved(true);setTimeout(()=>setSaved(false),2500);};
+  return(
+    <div style={{gridColumn:"1/-1",padding:"18px",background:C.bgSurf,borderRadius:8,border:`1px solid ${C.border}`}}>
+      <div style={{fontSize:9,color:C.gold,fontWeight:700,letterSpacing:"0.12em",marginBottom:12}}>OBSERVAÇÕES / SOLICITAÇÕES DE ALTERAÇÃO</div>
+      <textarea rows={4} value={obs} onChange={e=>{setObs(e.target.value);setSaved(false);}}
+        placeholder="Descreva aqui suas dúvidas, observações ou solicitações de alteração na minuta..."
+        style={{background:C.bg,border:`1px solid ${C.border}`,color:C.text,borderRadius:6,
+          padding:"10px 14px",fontFamily:"'Montserrat',sans-serif",fontSize:13,width:"100%",
+          resize:"vertical",minHeight:80,marginBottom:12,outline:"none"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <button onClick={save}
+          style={{display:"inline-flex",alignItems:"center",gap:8,padding:"9px 20px",borderRadius:5,
+            background:saved?C.success:C.gold,border:"none",color:C.bg,cursor:"pointer",
+            fontFamily:"'Montserrat',sans-serif",fontSize:12,fontWeight:600,
+            letterSpacing:"0.06em",textTransform:"uppercase",transition:"background 0.3s"}}>
+          {saved?"✓ Enviado":"Enviar Observação"}
+        </button>
+        {saved&&<span style={{fontSize:11,color:C.success,letterSpacing:"0.06em"}}>Observação registrada com sucesso.</span>}
       </div>
     </div>
   );
@@ -625,9 +762,23 @@ function Field({label,val}){
 }
 
 /* ─── FormView ─── */
-function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewParte,addParte,remParte,saveCase,editId,onCancel,steps,STAGES,TIPOS,QUALS,RI_STAGES,C}){
+function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewParte,addParte,remParte,saveCase,editId,onCancel,notificarCliente,steps,STAGES,TIPOS,QUALS,RI_STAGES,C}){
   const f=(k,v)=>setFormData(d=>({...d,[k]:v}));
   const fn=(s,k,v)=>setFormData(d=>({...d,[s]:{...d[s],[k]:v}}));
+  const handleMinutaUpload=(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    if(file.size>3*1024*1024){alert("Arquivo muito grande. Máximo 3MB.");e.target.value="";return;}
+    const reader=new FileReader();
+    reader.onload=(ev)=>setFormData(d=>({...d,minutaBase64:ev.target.result,minutaFileName:file.name}));
+    reader.readAsDataURL(file);
+  };
+  const handleDocFinalUpload=(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    if(file.size>3*1024*1024){alert("Arquivo muito grande. Máximo 3MB.");e.target.value="";return;}
+    const reader=new FileReader();
+    reader.onload=(ev)=>setFormData(d=>({...d,documentoFinalBase64:ev.target.result,documentoFinalFileName:file.name}));
+    reader.readAsDataURL(file);
+  };
 
   return(
     <div style={{maxWidth:820,margin:"0 auto",padding:"32px"}}>
@@ -686,7 +837,15 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
                 )}
               </div>
             </div>
+            {formData.estagio===4&&(
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:C.bgSurf,borderRadius:6,border:`1px solid ${C.border}`}}>
+                <input type="checkbox" id="conferencia" checked={!!formData.conferenciaInterna} onChange={e=>f("conferenciaInterna",e.target.checked)}
+                  style={{width:16,height:16,cursor:"pointer",accentColor:C.gold}}/>
+                <label htmlFor="conferencia" style={{fontSize:12,color:C.text,textTransform:"none",letterSpacing:"0.02em",cursor:"pointer",marginBottom:0,fontWeight:600}}>Em conferência interna</label>
+              </div>
+            )}
             <div><label>Pendência para Próximo Estágio</label><input value={formData.pendencia} onChange={e=>f("pendencia",e.target.value)} placeholder="O que está pendente para avançar?"/></div>
+            <div><label>Observações Internas</label><textarea rows={3} value={formData.observacoes} onChange={e=>f("observacoes",e.target.value)} placeholder="Anotações internas (não visíveis ao cliente)..."/></div>
           </div>
         )}
 
@@ -748,6 +907,28 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
             <div><label>Documentos Necessários</label><textarea rows={4} value={formData.documentosNecessarios} onChange={e=>f("documentosNecessarios",e.target.value)} placeholder="Liste os documentos necessários para o ato..."/></div>
             <div><label>Documentos Pendentes</label><textarea rows={4} value={formData.documentosPendentes} onChange={e=>f("documentosPendentes",e.target.value)} placeholder="Liste os documentos ainda pendentes de envio..."/></div>
             <div><label>Observações Internas</label><textarea rows={3} value={formData.observacoes} onChange={e=>f("observacoes",e.target.value)} placeholder="Anotações internas (não visíveis ao cliente)..."/></div>
+            <div>
+              <label>Minuta (Arquivo — máx. 3MB)</label>
+              {formData.minutaFileName?(
+                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:C.bgSurf,borderRadius:6,border:`1px solid ${C.border}`}}>
+                  <span style={{fontSize:12,color:C.text,flex:1}}>📄 {formData.minutaFileName}</span>
+                  <button type="button" className="btn btn-danger" style={{fontSize:10,padding:"5px 10px"}} onClick={()=>{f("minutaBase64","");f("minutaFileName","");}}>Remover</button>
+                </div>
+              ):(
+                <input type="file" accept=".pdf,.doc,.docx,.odt" onChange={handleMinutaUpload} style={{cursor:"pointer"}}/>
+              )}
+            </div>
+            <div>
+              <label>Escritura / Matrícula — Documento Final (máx. 3MB)</label>
+              {formData.documentoFinalFileName?(
+                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:C.bgSurf,borderRadius:6,border:`1px solid ${C.border}`}}>
+                  <span style={{fontSize:12,color:C.text,flex:1}}>📄 {formData.documentoFinalFileName}</span>
+                  <button type="button" className="btn btn-danger" style={{fontSize:10,padding:"5px 10px"}} onClick={()=>{f("documentoFinalBase64","");f("documentoFinalFileName","");}}>Remover</button>
+                </div>
+              ):(
+                <input type="file" accept=".pdf" onChange={handleDocFinalUpload} style={{cursor:"pointer"}}/>
+              )}
+            </div>
           </div>
         )}
 
@@ -766,7 +947,7 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
               <div><label>Valor do Imposto (R$)</label><input value={formData.valores.imposto} onChange={e=>fn("valores","imposto",e.target.value)} placeholder="0,00"/></div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-              <div><label>Atualização de Certidões (R$)</label><input value={formData.valores.certidoes} onChange={e=>fn("valores","certidoes",e.target.value)} placeholder="0,00"/></div>
+              <div><label>Atualização de Certidão (R$)</label><input value={formData.valores.certidoes} onChange={e=>fn("valores","certidoes",e.target.value)} placeholder="0,00"/></div>
             </div>
             <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
               <div style={{display:"flex",alignItems:"flex-end",gap:10}}>
@@ -837,7 +1018,15 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
           {formStep<steps.length?(
             <button className="btn btn-gold" style={{fontSize:11}} onClick={()=>setFormStep(s=>s+1)}>Próximo →</button>
           ):(
-            <button className="btn btn-gold" style={{fontSize:11}} onClick={saveCase}>✓ Salvar Caso</button>
+            <div style={{display:"flex",gap:10}}>
+              <button className="btn btn-gold" style={{fontSize:11}} onClick={saveCase}>✓ Salvar Caso</button>
+              {(formData.canal==="WhatsApp"||formData.canal==="E-mail")&&(
+                <button className="btn" style={{fontSize:11,borderColor:C.gold+"88",color:C.gold}}
+                  onClick={()=>{saveCase();notificarCliente(formData);}}>
+                  {formData.canal==="WhatsApp"?"📱 Salvar e Notificar":"✉️ Salvar e Notificar"}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
