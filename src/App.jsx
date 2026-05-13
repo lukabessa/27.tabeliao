@@ -56,6 +56,7 @@ const initialCase = () => ({
   dataSolicitacao:"", dataDocumentacao:"", estagio:1, pendencia:"", conferenciaInterna:false,
   minutaBase64:"", minutaFileName:"", observacoesCliente:"",
   documentoFinalBase64:"", documentoFinalFileName:"",
+  orcamentoBase64:"", orcamentoFileName:"",
   solicitante:{nome:"",cpf:"",email:"",telefone:""},
   canal:"WhatsApp", minutaResponsavel:"Heitor", minutaResponsavelCustom:"", partes:[],
   documentosNecessarios:"", documentosPendentes:"",
@@ -132,6 +133,7 @@ export default function App(){
       `Aqui é o Escrevente Heitor Lima — 27º Tabelião de Notas da Capital.`,``,
       `Seu processo foi atualizado:`,
       `📋 Protocolo: ${c.protocolo||c.id}`,
+      c.senha?`🔑 Senha: ${c.senha}`:null,
       c.tipo?`📌 Tipo: ${c.tipo}`:null,
       `🔄 Estágio atual: ${stg?.label||"—"}`,
       c.pendencia?`⚠️ Pendência: ${c.pendencia}`:null,``,
@@ -978,6 +980,13 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
     reader.onload=(ev)=>setFormData(d=>({...d,documentoFinalBase64:ev.target.result,documentoFinalFileName:file.name}));
     reader.readAsDataURL(file);
   };
+  const handleOrcamentoUpload=(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    if(file.size>3*1024*1024){alert("Arquivo muito grande. Máximo 3MB.");e.target.value="";return;}
+    const reader=new FileReader();
+    reader.onload=(ev)=>setFormData(d=>({...d,orcamentoBase64:ev.target.result,orcamentoFileName:file.name}));
+    reader.readAsDataURL(file);
+  };
 
   return(
     <div style={{maxWidth:820,margin:"0 auto",padding:"32px"}}>
@@ -1172,6 +1181,17 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
                   Calcular
                 </button>
               </div>
+            </div>
+            <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
+              <label>Orçamento (PDF — máx. 3MB)</label>
+              {formData.orcamentoFileName?(
+                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:C.bgSurf,borderRadius:6,border:`1px solid ${C.border}`}}>
+                  <span style={{fontSize:12,color:C.text,flex:1}}>📄 {formData.orcamentoFileName}</span>
+                  <button type="button" className="btn btn-danger" style={{fontSize:10,padding:"5px 10px"}} onClick={()=>{f("orcamentoBase64","");f("orcamentoFileName","");}}>Remover</button>
+                </div>
+              ):(
+                <input type="file" accept=".pdf" onChange={handleOrcamentoUpload} style={{cursor:"pointer"}}/>
+              )}
             </div>
           </div>
         )}
