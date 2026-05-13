@@ -117,6 +117,8 @@ export default function App(){
   const [aiInput,setAiInput]=useState("");
   const [aiLoading,setAiLoading]=useState(false);
   const [showAI,setShowAI]=useState(false);
+  const [adminTab,setAdminTab]=useState("atos");
+  const [tarefas,setTarefas]=useLS("heitor27_tarefas",[]);
 
   const PASS = "heitor2724";
 
@@ -273,7 +275,7 @@ export default function App(){
         <div style={{display:"flex",gap:10}}>
           <button className="btn" style={{fontSize:11}} onClick={()=>{setConsultResult(null);setConsultErr("");setView("consult");}}>Consultar Protocolo</button>
           <button className="btn btn-gold" style={{fontSize:11}} onClick={()=>{adminAuth?setView("admin"):setView("login");}}>
-            {adminAuth?"Painel Admin":"Acesso Restrito"}
+            {adminAuth?"Área do Escrevente":"Área do Escrevente"}
           </button>
         </div>
       </div>
@@ -328,7 +330,7 @@ export default function App(){
 
           <div style={{display:"flex",alignItems:"center",gap:16,color:C.dim,fontSize:11,letterSpacing:"0.1em"}}>
             <div style={{flex:1,height:1,background:C.border}}/>
-            <span>ACESSO ADMINISTRATIVO RESTRITO AO ESCREVENTE RESPONSÁVEL</span>
+            <span>ÁREA DO ESCREVENTE — ACESSO RESTRITO</span>
             <div style={{flex:1,height:1,background:C.border}}/>
           </div>
         </div>
@@ -340,7 +342,7 @@ export default function App(){
           <div className="card" style={{padding:"32px"}}>
             <div style={{textAlign:"center",marginBottom:28}}>
               <LogoBadge size={52}/>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:22,color:C.white,marginTop:16,marginBottom:4}}>Acesso Administrativo</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:22,color:C.white,marginTop:16,marginBottom:4}}>Área do Escrevente</div>
               <div style={{fontSize:11,color:C.muted,letterSpacing:"0.06em"}}>RESTRITO AO ESCREVENTE RESPONSÁVEL</div>
             </div>
             <label>Senha de Acesso</label>
@@ -384,75 +386,98 @@ export default function App(){
       {/* ADMIN */}
       {view==="admin"&&adminAuth&&(
         <div style={{padding:"32px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:28}}>
-            <div>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:28,color:C.white}}>Painel de Gestão</div>
-              <div style={{fontSize:10,color:C.muted,letterSpacing:"0.12em",marginTop:4}}>{cases.length} CASO{cases.length!==1?"S":""} CADASTRADO{cases.length!==1?"S":""}</div>
-            </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:28,color:C.white}}>Área do Escrevente</div>
             <div style={{display:"flex",gap:10}}>
               <button className="btn" style={{fontSize:11}} onClick={()=>setShowAI(!showAI)}>✦ Assistente IA</button>
-              <button className="btn btn-gold" style={{fontSize:11}} onClick={()=>{setFormData(initialCase());setEditId(null);setFormStep(1);setView("form");}}>+ Novo Caso</button>
+              <button className="btn btn-gold" style={{fontSize:11}} onClick={()=>{setFormData(initialCase());setEditId(null);setFormStep(1);setView("form");}}>+ Novo Ato</button>
             </div>
           </div>
 
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:24}}>
-            {[
-              {label:"Total de Casos",val:cases.length,c:C.gold},
-              {label:"Em Andamento",val:cases.filter(c=>c.estagio<7).length,c:C.info},
-              {label:"Finalizados",val:cases.filter(c=>c.estagio===7).length,c:C.success},
-              {label:"Com Pendências",val:cases.filter(c=>c.pendencia).length,c:C.warning},
-            ].map((s,i)=>(
-              <div key={i} style={{background:C.bgSurf,border:`1px solid ${C.border}`,borderRadius:10,padding:"18px 20px"}}>
-                <div style={{fontSize:9,color:C.muted,textTransform:"uppercase",letterSpacing:"0.14em",marginBottom:10,fontWeight:700}}>{s.label}</div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:38,color:s.c}}>{s.val}</div>
-              </div>
+          {/* TABS */}
+          <div style={{display:"flex",gap:0,marginBottom:28,borderBottom:`1px solid ${C.border}`}}>
+            {[{id:"atos",label:"Atos"},{id:"agenda",label:"Agenda"}].map(tab=>(
+              <button key={tab.id} onClick={()=>setAdminTab(tab.id)} style={{
+                padding:"10px 28px",background:"none",border:"none",cursor:"pointer",
+                borderBottom:`2px solid ${adminTab===tab.id?C.gold:"transparent"}`,
+                color:adminTab===tab.id?C.gold:C.muted,
+                fontFamily:"'Montserrat',sans-serif",fontSize:13,fontWeight:600,
+                letterSpacing:"0.06em",transition:"all 0.2s",marginBottom:-1,
+              }}>{tab.label.toUpperCase()}</button>
             ))}
           </div>
 
-          <div style={{display:"flex",gap:10,marginBottom:20,alignItems:"center"}}>
-            <input placeholder="Buscar por protocolo, nome, tipo..." value={searchTerm}
-              onChange={e=>setSearchTerm(e.target.value)} style={{maxWidth:340,fontSize:12}}/>
-            <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={{maxWidth:240,fontSize:12}}>
-              <option value="all">Todos os estágios</option>
-              {STAGES.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
-          </div>
-
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {filtered.length===0&&(
-              <div style={{textAlign:"center",color:C.muted,padding:"48px 0",fontSize:13,letterSpacing:"0.08em"}}>NENHUM CASO ENCONTRADO</div>
-            )}
-            {filtered.map(c=>(
-              <div key={c.id} style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,transition:"border-color 0.2s"}}
-                onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd}
-                onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6,flexWrap:"wrap"}}>
-                    <span style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:17,color:C.white}}>{c.protocolo||c.id}</span>
-                    <span className="tag" style={{background:stageColor(c.estagio)+"22",color:stageColor(c.estagio),border:`1px solid ${stageColor(c.estagio)}44`}}>
-                      {STAGES.find(s=>s.id===c.estagio)?.short||"—"}
-                    </span>
-                    {c.tipo&&<span className="tag" style={{background:C.goldSoft,color:C.gold,border:`1px solid ${C.goldMid}`}}>{c.tipo}</span>}
+          {/* ABA ATOS */}
+          {adminTab==="atos"&&(
+            <>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:24}}>
+                {[
+                  {label:"Total de Atos",val:cases.length,c:C.gold},
+                  {label:"Em Andamento",val:cases.filter(c=>c.estagio<7).length,c:C.info},
+                  {label:"Finalizados",val:cases.filter(c=>c.estagio===7).length,c:C.success},
+                  {label:"Com Pendências",val:cases.filter(c=>c.pendencia).length,c:C.warning},
+                ].map((s,i)=>(
+                  <div key={i} style={{background:C.bgSurf,border:`1px solid ${C.border}`,borderRadius:10,padding:"18px 20px"}}>
+                    <div style={{fontSize:9,color:C.muted,textTransform:"uppercase",letterSpacing:"0.14em",marginBottom:10,fontWeight:700}}>{s.label}</div>
+                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:38,color:s.c}}>{s.val}</div>
                   </div>
-                  <div style={{fontSize:11,color:C.muted,display:"flex",gap:16,flexWrap:"wrap"}}>
-                    <span>{c.solicitante?.nome||"—"}</span>
-                    {c.dataSolicitacao&&<span>Solicitado: {c.dataSolicitacao}</span>}
-                    {c.pendencia&&<span style={{color:C.warning}}>⚠ {c.pendencia}</span>}
-                  </div>
-                </div>
-                <div style={{display:"flex",gap:8,flexShrink:0}}>
-                  <button className="btn" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>{setDetailCase(c);setView("detail");}}>Ver</button>
-                  <button className="btn" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>openEdit(c)}>Editar</button>
-                  {(c.canal==="WhatsApp"||c.canal==="E-mail")&&(
-                    <button className="btn" style={{fontSize:10,padding:"7px 14px",borderColor:C.gold+"88",color:C.gold}} onClick={()=>notificarCliente(c)}>
-                      {c.canal==="WhatsApp"?"📱 Notificar":"✉️ Notificar"}
-                    </button>
-                  )}
-                  <button className="btn btn-danger" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>delCase(c.id)}>Excluir</button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+
+              <div style={{display:"flex",gap:10,marginBottom:20,alignItems:"center"}}>
+                <input placeholder="Buscar por protocolo, nome, tipo..." value={searchTerm}
+                  onChange={e=>setSearchTerm(e.target.value)} style={{maxWidth:340,fontSize:12}}/>
+                <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={{maxWidth:240,fontSize:12}}>
+                  <option value="all">Todos os estágios</option>
+                  {STAGES.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
+                </select>
+              </div>
+
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {filtered.length===0&&(
+                  <div style={{textAlign:"center",color:C.muted,padding:"48px 0",fontSize:13,letterSpacing:"0.08em"}}>NENHUM ATO ENCONTRADO</div>
+                )}
+                {filtered.map(c=>(
+                  <div key={c.id} style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,transition:"border-color 0.2s"}}
+                    onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6,flexWrap:"wrap"}}>
+                        <span style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:17,color:C.white}}>{c.protocolo||c.id}</span>
+                        <span className="tag" style={{background:stageColor(c.estagio)+"22",color:stageColor(c.estagio),border:`1px solid ${stageColor(c.estagio)}44`}}>
+                          {STAGES.find(s=>s.id===c.estagio)?.short||"—"}
+                        </span>
+                        {c.tipo&&<span className="tag" style={{background:C.goldSoft,color:C.gold,border:`1px solid ${C.goldMid}`}}>{c.tipo}</span>}
+                      </div>
+                      <div style={{fontSize:11,color:C.muted,display:"flex",gap:16,flexWrap:"wrap"}}>
+                        <span>{c.solicitante?.nome||"—"}</span>
+                        {c.dataSolicitacao&&<span>Solicitado: {c.dataSolicitacao}</span>}
+                        {c.pendencia&&<span style={{color:C.warning}}>⚠ {c.pendencia}</span>}
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:8,flexShrink:0}}>
+                      <button className="btn" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>{setDetailCase(c);setView("detail");}}>Ver</button>
+                      <button className="btn" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>openEdit(c)}>Editar</button>
+                      {(c.canal==="WhatsApp"||c.canal==="E-mail")&&(
+                        <button className="btn" style={{fontSize:10,padding:"7px 14px",borderColor:C.gold+"88",color:C.gold}} onClick={()=>notificarCliente(c)}>
+                          {c.canal==="WhatsApp"?"📱 Notificar":"✉️ Notificar"}
+                        </button>
+                      )}
+                      <button className="btn btn-danger" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>delCase(c.id)}>Excluir</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* ABA AGENDA */}
+          {adminTab==="agenda"&&(
+            <AgendaView
+              cases={cases} tarefas={tarefas} setTarefas={setTarefas}
+              C={C} setDetailCase={setDetailCase} setView={setView}
+            />
+          )}
         </div>
       )}
 
@@ -465,7 +490,7 @@ export default function App(){
           </div>
           <CaseView c={detailCase} stageColor={stageColor}/>
           <div className="card" style={{marginTop:16}}>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:18,color:C.gold,marginBottom:18}}>Dados Internos (Admin)</div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:18,color:C.gold,marginBottom:18}}>Dados Internos (Escrevente)</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
               <Field label="Escrevente da Minuta" val={detailCase.minutaResponsavel==="Outro"?detailCase.minutaResponsavelCustom||"—":detailCase.minutaResponsavel||"—"}/>
               <Field label="Agendamento" val={detailCase.assinatura?.data?(detailCase.assinatura.data+(detailCase.assinatura.hora?" às "+detailCase.assinatura.hora:"")):"—"}/>
@@ -757,6 +782,180 @@ function Field({label,val}){
     <div>
       <div style={{fontSize:9,color:C.muted,letterSpacing:"0.12em",fontWeight:700,marginBottom:6,textTransform:"uppercase"}}>{label}</div>
       <div style={{fontSize:13,color:C.text}}>{val||"—"}</div>
+    </div>
+  );
+}
+
+/* ─── AgendaView ─── */
+function AgendaView({cases,tarefas,setTarefas,C,setDetailCase,setView}){
+  const todayStr=new Date().toISOString().slice(0,10);
+  const [cur,setCur]=useState(()=>{const d=new Date();return{y:d.getFullYear(),m:d.getMonth()};});
+  const [sel,setSel]=useState(todayStr);
+  const [novaTarefa,setNovaTarefa]=useState({titulo:"",hora:""});
+  const [addOpen,setAddOpen]=useState(false);
+
+  const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const DIAS=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+
+  const prevM=()=>setCur(c=>c.m===0?{y:c.y-1,m:11}:{y:c.y,m:c.m-1});
+  const nextM=()=>setCur(c=>c.m===11?{y:c.y+1,m:0}:{y:c.y,m:c.m+1});
+
+  const firstDay=new Date(cur.y,cur.m,1).getDay();
+  const daysInMonth=new Date(cur.y,cur.m+1,0).getDate();
+  const cells=[...Array(firstDay).fill(null),...Array.from({length:daysInMonth},(_,i)=>i+1)];
+
+  const dateStr=(d)=>`${cur.y}-${String(cur.m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  const fmt=(s)=>{if(!s)return"";const[y,m,d]=s.split("-");return`${d}/${m}/${y}`;};
+
+  const assinaturasDodia=(ds)=>cases.filter(c=>c.assinatura?.data===ds);
+  const tarefasDoDia=(ds)=>tarefas.filter(t=>t.data===ds).sort((a,b)=>(a.hora||"99")>(b.hora||"99")?1:-1);
+
+  const selAssinaturas=assinaturasDodia(sel);
+  const selTarefas=tarefasDoDia(sel);
+
+  const addTarefa=()=>{
+    if(!novaTarefa.titulo.trim())return;
+    setTarefas([...tarefas,{id:Date.now().toString(36),data:sel,titulo:novaTarefa.titulo,hora:novaTarefa.hora,feita:false}]);
+    setNovaTarefa({titulo:"",hora:""});setAddOpen(false);
+  };
+  const toggleTarefa=(id)=>setTarefas(tarefas.map(t=>t.id===id?{...t,feita:!t.feita}:t));
+  const delTarefa=(id)=>setTarefas(tarefas.filter(t=>t.id!==id));
+
+  return(
+    <div style={{display:"grid",gridTemplateColumns:"1fr 380px",gap:24,alignItems:"start"}}>
+
+      {/* CALENDÁRIO */}
+      <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
+        <div style={{padding:"14px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <button className="btn" style={{fontSize:11,padding:"6px 14px"}} onClick={prevM}>←</button>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:20,color:C.white}}>
+            {MESES[cur.m]} {cur.y}
+          </div>
+          <button className="btn" style={{fontSize:11,padding:"6px 14px"}} onClick={nextM}>→</button>
+        </div>
+
+        <div style={{padding:"16px"}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:6}}>
+            {DIAS.map(d=>(
+              <div key={d} style={{textAlign:"center",fontSize:9,color:C.muted,fontWeight:700,letterSpacing:"0.1em",padding:"4px 0"}}>{d}</div>
+            ))}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+            {cells.map((day,i)=>{
+              if(!day)return <div key={i}/>;
+              const ds=dateStr(day);
+              const hasAss=assinaturasDodia(ds).length>0;
+              const hasTar=tarefasDoDia(ds).length>0;
+              const isToday=ds===todayStr;
+              const isSel=ds===sel;
+              return(
+                <div key={i} onClick={()=>setSel(ds)} style={{
+                  padding:"6px 2px",borderRadius:6,cursor:"pointer",textAlign:"center",
+                  background:isSel?C.gold:isToday?C.goldSoft:"transparent",
+                  border:`1px solid ${isSel?C.gold:isToday?C.goldMid:"transparent"}`,
+                  transition:"all 0.15s",
+                }}>
+                  <div style={{fontSize:13,color:isSel?C.bg:isToday?C.gold:C.text,fontWeight:isSel||isToday?700:400}}>{day}</div>
+                  {(hasAss||hasTar)&&(
+                    <div style={{display:"flex",justifyContent:"center",gap:2,marginTop:2}}>
+                      {hasAss&&<div style={{width:5,height:5,borderRadius:"50%",background:isSel?C.bg:C.info}}/>}
+                      {hasTar&&<div style={{width:5,height:5,borderRadius:"50%",background:isSel?C.bg:C.gold}}/>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{padding:"10px 20px",borderTop:`1px solid ${C.border}`,display:"flex",gap:20}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:C.muted}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:C.info}}/> Assinatura
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:C.muted}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:C.gold}}/> Tarefa
+          </div>
+        </div>
+      </div>
+
+      {/* PAINEL DO DIA */}
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
+          <div style={{padding:"14px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <div style={{fontSize:9,color:C.muted,letterSpacing:"0.12em",fontWeight:700,marginBottom:2}}>DIA SELECIONADO</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:20,color:sel===todayStr?C.gold:C.white}}>
+                {fmt(sel)}{sel===todayStr&&<span style={{fontSize:11,color:C.gold,marginLeft:8,fontFamily:"'Montserrat',sans-serif",fontWeight:600,letterSpacing:"0.08em"}}>HOJE</span>}
+              </div>
+            </div>
+            <button className="btn btn-gold" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>setAddOpen(o=>!o)}>+ Tarefa</button>
+          </div>
+
+          {addOpen&&(
+            <div style={{padding:"14px 20px",background:C.bgSurf,borderBottom:`1px solid ${C.border}`}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 100px auto",gap:8,alignItems:"end"}}>
+                <div>
+                  <label>Tarefa</label>
+                  <input value={novaTarefa.titulo} onChange={e=>setNovaTarefa(p=>({...p,titulo:e.target.value}))}
+                    placeholder="Descrição..." onKeyDown={e=>e.key==="Enter"&&addTarefa()}/>
+                </div>
+                <div>
+                  <label>Horário</label>
+                  <input type="time" value={novaTarefa.hora} onChange={e=>setNovaTarefa(p=>({...p,hora:e.target.value}))}/>
+                </div>
+                <button className="btn btn-gold" style={{padding:"10px 14px",fontSize:12}} onClick={addTarefa}>Add</button>
+              </div>
+            </div>
+          )}
+
+          <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:14}}>
+            {/* Assinaturas */}
+            {selAssinaturas.length>0&&(
+              <div>
+                <div style={{fontSize:9,color:C.info,fontWeight:700,letterSpacing:"0.12em",marginBottom:10}}>ASSINATURAS AGENDADAS</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {selAssinaturas.map(c=>(
+                    <div key={c.id} style={{padding:"10px 14px",background:C.info+"14",borderRadius:6,border:`1px solid ${C.info}30`}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:600,color:C.white}}>{c.solicitante?.nome||"—"}</div>
+                          <div style={{fontSize:11,color:C.silver}}>{c.tipo||"Escritura"} · {c.protocolo}</div>
+                          {c.assinatura?.hora&&<div style={{fontSize:11,color:C.info,marginTop:2}}>🕐 {c.assinatura.hora}{c.assinatura.modalidade?` · ${c.assinatura.modalidade}`:""}</div>}
+                        </div>
+                        <button className="btn" style={{fontSize:9,padding:"4px 10px",flexShrink:0}} onClick={()=>{setDetailCase(c);setView("detail");}}>Ver</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tarefas */}
+            {selTarefas.length>0&&(
+              <div>
+                <div style={{fontSize:9,color:C.gold,fontWeight:700,letterSpacing:"0.12em",marginBottom:10}}>TAREFAS DO DIA</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {selTarefas.map(t=>(
+                    <div key={t.id} style={{padding:"10px 14px",background:C.bgSurf,borderRadius:6,border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:10}}>
+                      <input type="checkbox" checked={!!t.feita} onChange={()=>toggleTarefa(t.id)}
+                        style={{width:15,height:15,cursor:"pointer",accentColor:C.gold,flexShrink:0}}/>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12,color:t.feita?C.muted:C.text,textDecoration:t.feita?"line-through":"none"}}>{t.titulo}</div>
+                        {t.hora&&<div style={{fontSize:10,color:C.muted}}>🕐 {t.hora}</div>}
+                      </div>
+                      <button onClick={()=>delTarefa(t.id)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:16,lineHeight:1,padding:"2px 6px"}}>×</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selAssinaturas.length===0&&selTarefas.length===0&&(
+              <div style={{textAlign:"center",color:C.muted,fontSize:12,padding:"24px 0",letterSpacing:"0.06em"}}>NENHUM EVENTO NESTE DIA</div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
