@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const FONT = `@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');`;
 
@@ -66,11 +66,6 @@ const initialCase = () => ({
   observacoes:"", criadoEm:"", atualizadoEm:"",
 });
 
-function useLS(key,init){
-  const [v,sv]=useState(()=>{try{const s=localStorage.getItem(key);return s?JSON.parse(s):init;}catch{return init;}});
-  const save=(x)=>{sv(x);try{localStorage.setItem(key,JSON.stringify(x));}catch{}};
-  return [v,save];
-}
 
 function LogoBadge({ size = 42 }) {
   return (
@@ -98,7 +93,8 @@ function stageColor(s){
 }
 
 export default function App(){
-  const [cases,setCases]=useLS("heitor27_v2",[]);
+  const [cases,setCases]=useState([]);
+  useEffect(()=>{fetch('/api/casos').then(r=>r.json()).then(setCases).catch(()=>{});},[]);
   const [view,setView]=useState("home");
   const [adminAuth,setAdminAuth]=useState(false);
   const [adminPwd,setAdminPwd]=useState("");
@@ -119,7 +115,8 @@ export default function App(){
   const [aiLoading,setAiLoading]=useState(false);
   const [showAI,setShowAI]=useState(false);
   const [adminTab,setAdminTab]=useState("atos");
-  const [tarefas,setTarefas]=useLS("heitor27_tarefas",[]);
+  const [tarefas,setTarefas]=useState([]);
+  useEffect(()=>{fetch('/api/tarefas').then(r=>r.json()).then(setTarefas).catch(()=>{});},[]);
 
   const PASS = "heitor2724";
 
@@ -163,21 +160,49 @@ export default function App(){
     else setAdminErr("Senha incorreta.");
   };
 
-  const saveCase=()=>{
+  const saveCase=async()=>{
     const now=new Date().toISOString();
-    if(editId){
-      setCases(cases.map(c=>c.id===editId?{...formData,atualizadoEm:now}:c));
-      showToast("Caso atualizado com sucesso.");
-    } else {
-      const nc={...formData,id:`ESC${Date.now().toString(36).toUpperCase()}`,criadoEm:now,atualizadoEm:now};
-      if(!nc.protocolo) nc.protocolo=nc.id;
-      setCases([nc,...cases]);
-      showToast("Caso cadastrado com sucesso.");
-    }
+    try{
+      if(editId){
+        const updated={...formData,atualizadoEm:now};
+        await fetch(`/api/casos/${editId}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(updated)});
+        setCases(cases.map(c=>c.id===editId?updated:c));
+        showToast("Caso atualizado com sucesso.");
+      } else {
+        const nc={...formData,id:`ESC${Date.now().toString(36).toUpperCase()}`,criadoEm:now,atualizadoEm:now};
+        if(!nc.protocolo) nc.protocolo=nc.id;
+        await fetch("/api/casos",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(nc)});
+        setCases([nc,...cases]);
+        showToast("Caso cadastrado com sucesso.");
+      }
+    }catch{showToast("Erro ao salvar. Verifique a conexão.","danger");}
     setEditId(null);setFormData(initialCase());setFormStep(1);setView("admin");
   };
 
-  const delCase=(id)=>{if(confirm("Excluir este caso permanentemente?")){setCases(cases.filter(c=>c.id!==id));showToast("Caso excluído.","danger");}};
+  const delCase=async(id)=>{
+    if(confirm("Excluir este caso permanentemente?")){
+      try{
+        await fetch(`/api/casos/${id}`,{method:"DELETE"});
+        setCases(cases.filter(c=>c.id!==id));
+        showToast("Caso excluído.","danger");
+      }catch{showToast("Erro ao excluir.","danger");}
+    }
+  };
+
+  const addTarefaAPI=async(t)=>{
+    try{await fetch("/api/tarefas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)});}catch{}
+    setTarefas(prev=>[...prev,t]);
+  };
+  const toggleTarefaAPI=async(id)=>{
+    const t=tarefas.find(t=>t.id===id);
+    const updated={...t,feita:!t.feita};
+    try{await fetch(`/api/tarefas/${id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(updated)});}catch{}
+    setTarefas(prev=>prev.map(t=>t.id===id?updated:t));
+  };
+  const deleteTarefaAPI=async(id)=>{
+    try{await fetch(`/api/tarefas/${id}`,{method:"DELETE"});}catch{}
+    setTarefas(prev=>prev.filter(t=>t.id!==id));
+  };
 
   const openEdit=(c)=>{setFormData({...c});setEditId(c.id);setFormStep(1);setView("form");};
 
@@ -381,7 +406,7 @@ export default function App(){
             <button className="btn btn-gold" style={{width:"100%",justifyContent:"center"}} onClick={handleConsult}>Consultar</button>
           </div>
           {consultResult&&<CaseView c={consultResult} stageColor={stageColor}
-            onSaveObs={(obs)=>{const u={...consultResult,observacoesCliente:obs};setConsultResult(u);setCases(cases.map(c=>c.id===u.id?u:c));}}/>}
+            onSaveObs={async(obs)=>{const u={...consultResult,observacoesCliente:obs};try{await fetch(`/api/casos/${u.id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(u)});}catch{}setConsultResult(u);setCases(cases.map(c=>c.id===u.id?u:c));}}/>}
         </div>
       )}
 
@@ -476,7 +501,8 @@ export default function App(){
           {/* ABA AGENDA */}
           {adminTab==="agenda"&&(
             <AgendaView
-              cases={cases} tarefas={tarefas} setTarefas={setTarefas}
+              cases={cases} tarefas={tarefas}
+              onAddTarefa={addTarefaAPI} onToggleTarefa={toggleTarefaAPI} onDeleteTarefa={deleteTarefaAPI}
               C={C} setDetailCase={setDetailCase} setView={setView}
             />
           )}
@@ -789,7 +815,7 @@ function Field({label,val}){
 }
 
 /* ─── AgendaView ─── */
-function AgendaView({cases,tarefas,setTarefas,C,setDetailCase,setView}){
+function AgendaView({cases,tarefas,onAddTarefa,onToggleTarefa,onDeleteTarefa,C,setDetailCase,setView}){
   const todayStr=new Date().toISOString().slice(0,10);
   const [cur,setCur]=useState(()=>{const d=new Date();return{y:d.getFullYear(),m:d.getMonth()};});
   const [sel,setSel]=useState(todayStr);
@@ -817,11 +843,11 @@ function AgendaView({cases,tarefas,setTarefas,C,setDetailCase,setView}){
 
   const addTarefa=()=>{
     if(!novaTarefa.titulo.trim())return;
-    setTarefas([...tarefas,{id:Date.now().toString(36),data:sel,titulo:novaTarefa.titulo,hora:novaTarefa.hora,feita:false}]);
+    onAddTarefa({id:Date.now().toString(36),data:sel,titulo:novaTarefa.titulo,hora:novaTarefa.hora,feita:false});
     setNovaTarefa({titulo:"",hora:""});setAddOpen(false);
   };
-  const toggleTarefa=(id)=>setTarefas(tarefas.map(t=>t.id===id?{...t,feita:!t.feita}:t));
-  const delTarefa=(id)=>setTarefas(tarefas.filter(t=>t.id!==id));
+  const toggleTarefa=(id)=>onToggleTarefa(id);
+  const delTarefa=(id)=>onDeleteTarefa(id);
 
   return(
     <div style={{display:"grid",gridTemplateColumns:"1fr 380px",gap:24,alignItems:"start"}}>
