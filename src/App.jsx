@@ -160,32 +160,40 @@ export default function App(){
     else setAdminErr("Senha incorreta.");
   };
 
+  const api=async(url,opts={})=>{
+    const r=await fetch(url,{headers:{"Content-Type":"application/json"},...opts});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  };
+
   const saveCase=async()=>{
     const now=new Date().toISOString();
     try{
       if(editId){
         const updated={...formData,atualizadoEm:now};
-        await fetch(`/api/casos/${editId}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(updated)});
+        await api(`/api/casos/${editId}`,{method:"PUT",body:JSON.stringify(updated)});
         setCases(cases.map(c=>c.id===editId?updated:c));
         showToast("Caso atualizado com sucesso.");
       } else {
         const nc={...formData,id:`ESC${Date.now().toString(36).toUpperCase()}`,criadoEm:now,atualizadoEm:now};
         if(!nc.protocolo) nc.protocolo=nc.id;
-        await fetch("/api/casos",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(nc)});
+        await api("/api/casos",{method:"POST",body:JSON.stringify(nc)});
         setCases([nc,...cases]);
         showToast("Caso cadastrado com sucesso.");
       }
-    }catch{showToast("Erro ao salvar. Verifique a conexão.","danger");}
-    setEditId(null);setFormData(initialCase());setFormStep(1);setView("admin");
+      setEditId(null);setFormData(initialCase());setFormStep(1);setView("admin");
+    }catch{
+      showToast("Erro ao salvar — servidor offline ou sem conexão.","danger");
+    }
   };
 
   const delCase=async(id)=>{
     if(confirm("Excluir este caso permanentemente?")){
       try{
-        await fetch(`/api/casos/${id}`,{method:"DELETE"});
+        await api(`/api/casos/${id}`,{method:"DELETE"});
         setCases(cases.filter(c=>c.id!==id));
         showToast("Caso excluído.","danger");
-      }catch{showToast("Erro ao excluir.","danger");}
+      }catch{showToast("Erro ao excluir — servidor offline.","danger");}
     }
   };
 
