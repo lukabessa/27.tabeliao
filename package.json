@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"vite --port 5175\" \"node server.js\"",
     "server": "node server.js",
-    "build": "vite build",
+    "build": "vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview"
   },
