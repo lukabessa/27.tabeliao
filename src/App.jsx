@@ -289,6 +289,31 @@ export default function App(){
         .card{background:${C.bgCard};border:1px solid ${C.border};border-radius:10px;padding:22px;}
         .tag{display:inline-block;padding:3px 10px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;}
         textarea{resize:vertical;min-height:80px;}
+        @media(max-width:700px){
+          .r-pad{padding:16px!important;}
+          .r-pad-home{padding:36px 16px!important;}
+          .r-grid2{grid-template-columns:1fr!important;}
+          .r-grid3{grid-template-columns:1fr!important;}
+          .r-grid4{grid-template-columns:1fr 1fr!important;}
+          .r-agenda{grid-template-columns:1fr!important;}
+          .r-wrap{flex-wrap:wrap!important;}
+          .r-col{flex-direction:column!important;align-items:stretch!important;}
+          .r-full{width:100%!important;max-width:100%!important;}
+          .r-hide{display:none!important;}
+          .r-h1{font-size:30px!important;line-height:1.3!important;}
+          .r-topbar{padding:0 16px!important;}
+          .r-case-row{flex-direction:column!important;align-items:flex-start!important;gap:10px!important;}
+          .r-case-btns{width:100%!important;justify-content:flex-start!important;}
+          .btn.r-compact{padding:7px 12px!important;font-size:10px!important;letter-spacing:0!important;}
+          .r-tabs button{padding:10px 16px!important;font-size:11px!important;}
+          .r-form-btns{flex-direction:column-reverse!important;gap:8px!important;}
+          .r-form-btns button{width:100%!important;justify-content:center!important;}
+          .r-parte-grid{grid-template-columns:1fr 1fr!important;}
+        }
+        @media(max-width:400px){
+          .r-grid4{grid-template-columns:1fr!important;}
+          .r-parte-grid{grid-template-columns:1fr!important;}
+        }
       `}</style>
 
       {/* TOAST */}
@@ -303,29 +328,29 @@ export default function App(){
       )}
 
       {/* TOPBAR */}
-      <div style={{borderBottom:`1px solid ${C.border}`,padding:"0 32px",display:"flex",alignItems:"center",justifyContent:"space-between",height:64,background:C.bgCard}}>
+      <div className="r-topbar" style={{borderBottom:`1px solid ${C.border}`,padding:"0 32px",display:"flex",alignItems:"center",justifyContent:"space-between",height:64,background:C.bgCard}}>
         <div style={{display:"flex",alignItems:"center",gap:14,cursor:"pointer"}} onClick={()=>setView("home")}>
           <LogoBadge size={42}/>
-          <div>
+          <div className="r-hide">
             <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:17,color:C.white,lineHeight:1.1,letterSpacing:"0.02em"}}>27º Tabelião de Notas</div>
             <div style={{fontSize:9,color:C.gold,marginTop:3,letterSpacing:"0.18em",fontWeight:600,textTransform:"uppercase"}}>Gestão Notarial · Heitor Lima</div>
           </div>
         </div>
-        <div style={{display:"flex",gap:10}}>
-          <button className="btn" style={{fontSize:11}} onClick={()=>{setConsultResult(null);setConsultErr("");setView("consult");}}>Consultar Protocolo</button>
-          <button className="btn btn-gold" style={{fontSize:11}} onClick={()=>{adminAuth?setView("admin"):setView("login");}}>
-            {adminAuth?"Área do Escrevente":"Área do Escrevente"}
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn r-compact" style={{fontSize:11}} onClick={()=>{setConsultResult(null);setConsultErr("");setView("consult");}}>Consultar</button>
+          <button className="btn btn-gold r-compact" style={{fontSize:11}} onClick={()=>{adminAuth?setView("admin"):setView("login");}}>
+            {adminAuth?"Escrevente":"Escrevente"}
           </button>
         </div>
       </div>
 
       {/* HOME */}
       {view==="home"&&(
-        <div style={{maxWidth:960,margin:"0 auto",padding:"70px 32px"}}>
+        <div className="r-pad-home" style={{maxWidth:960,margin:"0 auto",padding:"70px 32px"}}>
           <div style={{textAlign:"center",marginBottom:64}}>
             <LogoBadge size={72}/>
             <div style={{height:1,width:80,background:C.gold,margin:"24px auto"}}/>
-            <h1 style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:46,lineHeight:1.2,color:C.white,marginBottom:12,letterSpacing:"0.01em"}}>
+            <h1 className="r-h1" style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:46,lineHeight:1.2,color:C.white,marginBottom:12,letterSpacing:"0.01em"}}>
               Central de Acompanhamento<br/>
               <span style={{color:C.gold,fontStyle:"italic"}}>de Atos Notariais</span>
             </h1>
@@ -334,7 +359,7 @@ export default function App(){
             </p>
           </div>
 
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:32}}>
+          <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:32}}>
             <div className="card" style={{cursor:"pointer",transition:"border-color 0.2s,transform 0.2s",textAlign:"center",padding:"36px 28px"}}
               onMouseEnter={e=>{e.currentTarget.style.borderColor=C.gold;e.currentTarget.style.transform="translateY(-2px)";}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="translateY(0)";}}
@@ -401,7 +426,7 @@ export default function App(){
           <div className="card" style={{marginBottom:consultResult?20:0}}>
             <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:24,color:C.white,marginBottom:4}}>Consulta de Andamento</div>
             <div style={{color:C.muted,fontSize:11,letterSpacing:"0.08em",marginBottom:24}}>INFORME OS DADOS FORNECIDOS PELO ESCREVENTE</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
               <div>
                 <label>Número do Protocolo</label>
                 <input placeholder="Ex.: ESC2025-001" value={consultInput.protocolo}
@@ -424,7 +449,7 @@ export default function App(){
 
       {/* ADMIN */}
       {view==="admin"&&adminAuth&&(
-        <div style={{padding:"32px"}}>
+        <div className="r-pad" style={{padding:"32px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
             <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:28,color:C.white}}>Área do Escrevente</div>
             <div style={{display:"flex",gap:10}}>
@@ -434,7 +459,7 @@ export default function App(){
           </div>
 
           {/* TABS */}
-          <div style={{display:"flex",gap:0,marginBottom:28,borderBottom:`1px solid ${C.border}`}}>
+          <div className="r-tabs" style={{display:"flex",gap:0,marginBottom:28,borderBottom:`1px solid ${C.border}`}}>
             {[{id:"atos",label:"Atos"},{id:"agenda",label:"Agenda"}].map(tab=>(
               <button key={tab.id} onClick={()=>setAdminTab(tab.id)} style={{
                 padding:"10px 28px",background:"none",border:"none",cursor:"pointer",
@@ -449,7 +474,7 @@ export default function App(){
           {/* ABA ATOS */}
           {adminTab==="atos"&&(
             <>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:24}}>
+              <div className="r-grid4" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:24}}>
                 {[
                   {label:"Total de Atos",val:cases.length,c:C.gold},
                   {label:"Em Andamento",val:cases.filter(c=>c.estagio<7).length,c:C.info},
@@ -463,10 +488,10 @@ export default function App(){
                 ))}
               </div>
 
-              <div style={{display:"flex",gap:10,marginBottom:20,alignItems:"center"}}>
+              <div className="r-wrap" style={{display:"flex",gap:10,marginBottom:20,alignItems:"center"}}>
                 <input placeholder="Buscar por protocolo, nome, tipo..." value={searchTerm}
-                  onChange={e=>setSearchTerm(e.target.value)} style={{maxWidth:340,fontSize:12}}/>
-                <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={{maxWidth:240,fontSize:12}}>
+                  onChange={e=>setSearchTerm(e.target.value)} className="r-full" style={{maxWidth:340,fontSize:12}}/>
+                <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="r-full" style={{maxWidth:240,fontSize:12}}>
                   <option value="all">Todos os estágios</option>
                   {STAGES.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
                 </select>
@@ -477,7 +502,7 @@ export default function App(){
                   <div style={{textAlign:"center",color:C.muted,padding:"48px 0",fontSize:13,letterSpacing:"0.08em"}}>NENHUM ATO ENCONTRADO</div>
                 )}
                 {filtered.map(c=>(
-                  <div key={c.id} style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,transition:"border-color 0.2s"}}
+                  <div key={c.id} className="r-case-row" style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,transition:"border-color 0.2s"}}
                     onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd}
                     onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
                     <div style={{flex:1,minWidth:0}}>
@@ -494,7 +519,7 @@ export default function App(){
                         {c.pendencia&&<span style={{color:C.warning}}>⚠ {c.pendencia}</span>}
                       </div>
                     </div>
-                    <div style={{display:"flex",gap:8,flexShrink:0}}>
+                    <div className="r-case-btns" style={{display:"flex",gap:8,flexShrink:0}}>
                       <button className="btn" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>{setDetailCase(c);setView("detail");}}>Ver</button>
                       <button className="btn" style={{fontSize:10,padding:"7px 14px"}} onClick={()=>openEdit(c)}>Editar</button>
                       {(c.canal==="WhatsApp"||c.canal==="E-mail")&&(
@@ -531,7 +556,7 @@ export default function App(){
           <CaseView c={detailCase} stageColor={stageColor}/>
           <div className="card" style={{marginTop:16}}>
             <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:18,color:C.gold,marginBottom:18}}>Dados Internos (Escrevente)</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+            <div className="r-grid3" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
               <Field label="Escrevente da Minuta" val={detailCase.minutaResponsavel==="Outro"?detailCase.minutaResponsavelCustom||"—":detailCase.minutaResponsavel||"—"}/>
               <Field label="Agendamento" val={detailCase.assinatura?.data?(detailCase.assinatura.data+(detailCase.assinatura.hora?" às "+detailCase.assinatura.hora:"")):"—"}/>
               <Field label="Modalidade" val={detailCase.assinatura?.modalidade||"—"}/>
@@ -646,7 +671,7 @@ function CaseView({c,stageColor,onSaveObs}){
         </div>
       </div>
 
-      <div style={{padding:"24px 28px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+      <div className="r-grid2" style={{padding:"24px 28px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
         {(c.valores?.escritura||c.valores?.registro||c.valores?.imposto||c.valores?.certidoes)&&(
           <div style={{gridColumn:"1/-1",background:C.bgSurf,borderRadius:8,padding:"16px 18px",border:`1px solid ${C.border}`}}>
             <div style={{fontSize:9,color:C.gold,letterSpacing:"0.14em",fontWeight:700,marginBottom:14}}>VALORES</div>
@@ -862,7 +887,7 @@ function AgendaView({cases,tarefas,onAddTarefa,onToggleTarefa,onDeleteTarefa,C,s
   const delTarefa=(id)=>onDeleteTarefa(id);
 
   return(
-    <div style={{display:"grid",gridTemplateColumns:"1fr 380px",gap:24,alignItems:"start"}}>
+    <div className="r-agenda" style={{display:"grid",gridTemplateColumns:"1fr 380px",gap:24,alignItems:"start"}}>
 
       {/* CALENDÁRIO */}
       <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
@@ -1027,7 +1052,7 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
   };
 
   return(
-    <div style={{maxWidth:820,margin:"0 auto",padding:"32px"}}>
+    <div className="r-pad" style={{maxWidth:820,margin:"0 auto",padding:"32px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:28}}>
         <div>
           <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:26,color:C.white}}>{editId?"Editar Caso":"Novo Caso"}</div>
@@ -1046,11 +1071,11 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
       <div className="card" style={{minHeight:320}}>
         {formStep===1&&(
           <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Número do Protocolo</label><input value={formData.protocolo} onChange={e=>f("protocolo",e.target.value)} placeholder="Ex.: ESC2025-001"/></div>
               <div><label>Senha do Cliente</label><input value={formData.senha} onChange={e=>f("senha",e.target.value)} placeholder="Senha para consulta pública"/></div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Tipo de Escritura</label>
                 <select value={formData.tipo} onChange={e=>f("tipo",e.target.value)}>
                   <option value="">Selecione...</option>
@@ -1060,7 +1085,7 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
               <div><label>Data da Solicitação</label><input type="date" value={formData.dataSolicitacao} onChange={e=>f("dataSolicitacao",e.target.value)}/></div>
             </div>
             <div><label>Teor / Descrição do Ato</label><textarea rows={3} value={formData.teor} onChange={e=>f("teor",e.target.value)} placeholder="Descreva o objeto do ato notarial..."/></div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Estágio Atual</label>
                 <select value={formData.estagio} onChange={e=>f("estagio",parseInt(e.target.value))}>
                   {STAGES.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
@@ -1097,11 +1122,11 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
 
         {formStep===2&&(
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Nome do Solicitante</label><input value={formData.solicitante.nome} onChange={e=>fn("solicitante","nome",e.target.value)}/></div>
               <div><label>CPF</label><input value={formData.solicitante.cpf} onChange={e=>fn("solicitante","cpf",e.target.value)} placeholder="000.000.000-00"/></div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>E-mail</label><input type="email" value={formData.solicitante.email} onChange={e=>fn("solicitante","email",e.target.value)}/></div>
               <div><label>Telefone</label><input value={formData.solicitante.telefone} onChange={e=>fn("solicitante","telefone",e.target.value)} placeholder="(11) 00000-0000"/></div>
             </div>
@@ -1117,7 +1142,7 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
           <div>
             <div style={{background:C.bgSurf,borderRadius:8,padding:"16px",marginBottom:18,border:`1px solid ${C.border}`}}>
               <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:"0.08em",marginBottom:14}}>ADICIONAR PARTE</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr auto",gap:10,alignItems:"end"}}>
+              <div className="r-parte-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr auto",gap:10,alignItems:"end"}}>
                 <div><label>Nome</label><input value={newParte.nome} onChange={e=>setNewParte(p=>({...p,nome:e.target.value}))}/></div>
                 <div><label>CPF</label><input value={newParte.cpf} onChange={e=>setNewParte(p=>({...p,cpf:e.target.value}))}/></div>
                 <div><label>RG</label><input value={newParte.rg} onChange={e=>setNewParte(p=>({...p,rg:e.target.value}))}/></div>
@@ -1180,11 +1205,11 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
 
         {formStep===5&&(
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Valor da Escritura (R$)</label><input value={formData.valores.escritura} onChange={e=>fn("valores","escritura",e.target.value)} placeholder="0,00"/></div>
               <div><label>Valor do Registro (R$)</label><input value={formData.valores.registro} onChange={e=>fn("valores","registro",e.target.value)} placeholder="0,00"/></div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Tipo de Imposto</label>
                 <select value={formData.valores.tipoImposto} onChange={e=>fn("valores","tipoImposto",e.target.value)}>
                   <option>ITBI</option><option>ITCMD</option>
@@ -1192,7 +1217,7 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
               </div>
               <div><label>Valor do Imposto (R$)</label><input value={formData.valores.imposto} onChange={e=>fn("valores","imposto",e.target.value)} placeholder="0,00"/></div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Atualização de Certidão (R$)</label><input value={formData.valores.certidoes} onChange={e=>fn("valores","certidoes",e.target.value)} placeholder="0,00"/></div>
             </div>
             <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
@@ -1236,11 +1261,11 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
 
         {formStep===6&&(
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Protocolo do Registro de Imóveis</label><input value={formData.registroImovel.protocolo} onChange={e=>fn("registroImovel","protocolo",e.target.value)}/></div>
               <div><label>Número do Registro</label><input value={formData.registroImovel.numero} onChange={e=>fn("registroImovel","numero",e.target.value)}/></div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div className="r-grid2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div><label>Cidade</label><input value={formData.registroImovel.cidade} onChange={e=>fn("registroImovel","cidade",e.target.value)}/></div>
               <div><label>Estado</label><input value={formData.registroImovel.estado} onChange={e=>fn("registroImovel","estado",e.target.value)} placeholder="SP"/></div>
             </div>
@@ -1255,7 +1280,7 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
 
         {formStep===7&&(
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
+            <div className="r-grid3" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
               <div><label>Data da Assinatura</label><input type="date" value={formData.assinatura.data} onChange={e=>fn("assinatura","data",e.target.value)}/></div>
               <div><label>Horário</label><input type="time" value={formData.assinatura.hora} onChange={e=>fn("assinatura","hora",e.target.value)}/></div>
               <div><label>Modalidade</label>
@@ -1268,7 +1293,7 @@ function FormView({formData,setFormData,formStep,setFormStep,newParte,setNewPart
         )}
       </div>
 
-      <div style={{display:"flex",justifyContent:"space-between",marginTop:20}}>
+      <div className="r-form-btns" style={{display:"flex",justifyContent:"space-between",marginTop:20}}>
         <button className="btn" onClick={()=>setFormStep(s=>Math.max(1,s-1))}
           style={{visibility:formStep===1?"hidden":"visible",fontSize:11}}>← Anterior</button>
         <div style={{display:"flex",gap:10}}>
