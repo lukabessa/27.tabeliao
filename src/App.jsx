@@ -161,7 +161,11 @@ export default function App(){
   };
 
   const api=async(url,opts={})=>{
-    const r=await fetch(url,{headers:{"Content-Type":"application/json"},...opts});
+    const hasBody=opts.body!=null;
+    const r=await fetch(url,{
+      ...opts,
+      headers:hasBody?{"Content-Type":"application/json"}:{},
+    });
     if(!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json();
   };
